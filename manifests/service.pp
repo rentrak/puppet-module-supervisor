@@ -35,7 +35,8 @@ define supervisor::service (
   $stderr_logfile_keep      = 10,
   $environment              = undef,
   $umask                    = undef,
- 
+  $stopasgroup              = false,
+  $killasgroup              = false,
 ) {
   include supervisor
 
