@@ -69,12 +69,6 @@ define supervisor::service (
     }
   }
 
-  if $numprocs > 1 {
-    $process_name = "${name}:*"
-  } else {
-    $process_name = $name
-  }
-
   $log_dir = "/var/log/supervisor/${name}"
 
   file { $log_dir:
