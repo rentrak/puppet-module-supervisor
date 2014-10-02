@@ -1,8 +1,5 @@
 Puppet module for configuring the 'supervisor' daemon control
-utility. Currently tested on CentOS 6.
-
-This fork installs using pip rather than system packages, since CentOS supervisor packages are hopelessly out-of-date. I've also added 
-some support for supervisor extensions (specifically superlance/httpok, but can easily be extended).
+utility. Currently tested on Debian, Ubuntu, and Fedora.
 
 Install into `<module_path>/supervisor`
 
@@ -12,24 +9,23 @@ Example usage:
 
   include supervisor
 
-  supervisor::service { 'http-app':
-    ensure          => present,
-    enable          => true,
-    user            => 'http-user',
-    directory       => '/var/www/http-app',
-    numprocs        => 4,
-    numprocs_start  => 8000,
-    command         => "/var/www/http-app/app.py --host 127.0.0.1 --port %(process_num)s",
-    redirect_stderr => true,
-    stdout_logfile  => "/var/log/supervivor/http-app-%(process_num)s.log",
-    stderr_logfile  => "/var/log/supervisor/http-app-%(process_num)s.error.log"
+  supervisor::service {
+    'scribe':
+      ensure      => present,
+      command     => '/usr/bin/scribed -c /etc/scribe/scribe.conf',
+      environment => 'HADOOP_HOME=/usr/lib/hadoop,LD_LIBRARY_PATH=/usr/lib/jvm/java-6-sun/jre/lib/amd64/server',
+      user        => 'scribe',
+      group       => 'scribe',
+      require     => [ Package['scribe'], User['scribe'] ];
   }
 
-  supervisor::plugins::httpok { 'http-app':
-    url      => 'http://127.0.0.1',
-    port     => 8000,
-    code     => '200',
-    numprocs => 4
+To use default debian paths:
+
+.. code-block:: puppet
+
+  class { 'supervisor':
+    conf_dir => '/etc/supervisor/conf.d',
+    conf_ext => '.conf',
   }
 
 Running tests:

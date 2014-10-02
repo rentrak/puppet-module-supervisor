@@ -12,8 +12,7 @@
 #
 define supervisor::service (
   $command,
-  $ensure                   = present,
-  $enable                   = true,
+  $ensure                   = 'present',
   $numprocs                 = 1,
   $numprocs_start           = 0,
   $priority                 = 999,
@@ -23,6 +22,8 @@ define supervisor::service (
   $exitcodes                = '0,2',
   $stopsignal               = 'TERM',
   $stopwait                 = 10,
+  $stopasgroup              = false,
+  $killasgroup              = false,
   $user                     = 'root',
   $group                    = 'root',
   $redirect_stderr          = false,
@@ -35,13 +36,11 @@ define supervisor::service (
   $stderr_logfile_keep      = 10,
   $environment              = undef,
   $umask                    = undef,
-  $stopasgroup              = false,
-  $killasgroup              = false,
 ) {
   include supervisor
 
   case $ensure {
-    absent: {
+    'absent': {
       $autostart = false
       $dir_ensure = 'absent'
       $dir_recurse = true
@@ -49,21 +48,24 @@ define supervisor::service (
       $service_ensure = 'stopped'
       $config_ensure = 'absent'
     }
-    present: {
+    'present', 'running': {
       $autostart = true
       $dir_ensure = 'directory'
       $dir_recurse = false
       $dir_force = false
       $service_ensure = 'running'
-
-      if $enable == true {
-        $config_ensure = undef
-      } else {
-        $config_ensure = absent
-      }
+      $config_ensure = file
+    }
+    'stopped': {
+      $autostart = false
+      $dir_ensure = 'directory'
+      $dir_recurse = false
+      $dir_force = false
+      $service_ensure = 'stopped'
+      $config_ensure = file
     }
     default: {
-      fail("ensure must be 'present' or 'absent', not ${ensure}")
+      fail("ensure must be 'present', 'running', 'stopped' or 'absent', not ${ensure}")
     }
   }
 
@@ -73,7 +75,9 @@ define supervisor::service (
     $process_name = $name
   }
 
-  file { "/var/log/supervisor/${name}":
+  $log_dir = "/var/log/supervisor/${name}"
+
+  file { $log_dir:
     ensure  => $dir_ensure,
     owner   => $user,
     group   => $group,
@@ -83,20 +87,27 @@ define supervisor::service (
     require => Class['supervisor'],
   }
 
-  file { "${supervisor::conf_dir}/${name}${supervisor::conf_ext}":
+  $conf_file = "${supervisor::conf_dir}/${name}${supervisor::conf_ext}"
+
+  file { $conf_file:
     ensure  => $config_ensure,
     content => template('supervisor/service.ini.erb'),
-    require => File["/var/log/supervisor/${name}"],
-    notify  => Class['supervisor::update'],
   }
 
   service { "supervisor::${name}":
     ensure   => $service_ensure,
-    provider => base,
-    restart  => "/usr/bin/supervisorctl restart ${process_name} | awk '/^${name}[: ]/{print \$2}' | grep -Pzo '^stopped\nstarted$'",
-    start    => "/usr/bin/supervisorctl start ${process_name} | grep 'started'",
-    status   => "/usr/bin/supervisorctl status | awk '/^${name}[: ]/{print \$2}' | grep '^RUNNING$'",
-    stop     => "/usr/bin/supervisorctl stop ${process_name} | awk '/^${name}[: ]/{print \$2}' | grep '^stopped$'",
-    require  => [Class['supervisor::update'], File["${supervisor::conf_dir}/${name}${supervisor::conf_ext}"]],
+    provider => supervisor,
+  }
+
+  case $ensure {
+    'present', 'running', 'stopped': {
+      File[$log_dir] -> File[$conf_file] ~>
+        Class['supervisor::update'] -> Service["supervisor::${name}"]
+    }
+    default: { # absent
+      # First stop the service, delete the .ini, reload the config, delete the log dir
+      Service["supervisor::${name}"] -> File[$conf_file] ~>
+        Class['supervisor::update'] -> File[$log_dir]
+    }
   }
 }
