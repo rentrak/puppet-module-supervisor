@@ -12,6 +12,8 @@ define supervisor::group (
   $ensure    = 'present',
   $priority  = undef
 ) {
+  include supervisor
+
   case $ensure {
     'absent': {
     }
