@@ -1,4 +1,4 @@
-/var/log/supervisor/supervisord.log /var/log/supervisor/*/*.out /var/log/supervisor/*/*.err {
+/var/log/supervisor/supervisord.log /var/log/supervisor/*/*.out /var/log/supervisor/*/*.log /var/log/supervisor/*/*.err {
     rotate 5
     daily
     compress
