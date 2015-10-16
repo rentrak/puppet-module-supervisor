@@ -129,7 +129,7 @@ class supervisor(
   $conf_dir                 = $supervisor::params::conf_dir,
   $conf_ext                 = $supervisor::params::conf_ext,
   $include_files            = [],
-  
+
 ) inherits supervisor::params {
 
   include supervisor::update
@@ -169,6 +169,14 @@ class supervisor(
     package { $supervisor::params::package:
       ensure   => $package_ensure,
       provider => 'pip'
+    }
+    # assume package 'supervisor' is still defined in supervisor::params
+    # ensure version 1.0.0 for dependency package meld3 to fix Puppet error on Cent 6.7
+    if (versioncmp($::operatingsystemrelease , '6.7') >= 0 and versioncmp($::operatingsystemrelease , '7') < 0) {
+      package { 'meld3':
+        ensure => '1.0.0',
+        provider => 'pip'
+      }
     }
   }
 

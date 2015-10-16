@@ -35,8 +35,13 @@ identifier=<%= @identifier %>
 [rpcinterface:supervisor]
 supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
 
+<% if @enable_inet_server -%>
+[supervisorctl]
+serverurl=http://<%= @inet_server_port %>
+<% else -%>
 [supervisorctl]
 serverurl=unix:///var/run/supervisor.sock ; use a unix:// URL  for a unix socket
+<% end -%>
 
 [include]
 files = <%= @conf_dir -%>/*<%= @conf_ext -%>
