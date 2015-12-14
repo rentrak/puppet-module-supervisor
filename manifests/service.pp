@@ -104,9 +104,9 @@ define supervisor::service (
       ensure   => $service_ensure,
       provider => supervisor,
     }
-  }
 
-  Service[$supervisor::params::system_service] -> Service["supervisor::${name}"]
+    Service[$supervisor::params::system_service] -> Service["supervisor::${name}"]
+  }
 
   case $ensure {
     'running', 'stopped': {
