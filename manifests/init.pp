@@ -7,6 +7,10 @@
 #     Ensure if present or absent.
 #     Default: present
 #
+#   [*nodaemon*]
+#     Run supervisord in the foreground.
+#     Default: false
+#
 #   [*autoupgrade*]
 #     Upgrade package automatically, if there is a newer version.
 #     Default: false
@@ -36,6 +40,19 @@
 #   [*inet_server_pass*]
 #     Password for the inet_http_server.
 #     Only used if inet_http_server is set to true and inet_server_user is set.
+#     Default: undef
+#
+#   [*unix_server_file*]
+#     The path for the socket file ([unix_http_server] section).
+#     Default: /var/run/supervisor.sock
+#
+#   [*unix_server_chmod*]
+#     Permission for the socket file ([unix_http_server] section).
+#     Default: 0700
+#
+#   [*unix_server_chown*]
+#     User and group of the socket file ([unix_http_server] section).
+#     If undef, Use the username and group of the user who starts supervisord.
 #     Default: undef
 #
 #   [*enable_logrotate*]
@@ -105,6 +122,7 @@
 #
 class supervisor(
   $ensure                   = 'present',
+  $nodaemon                 = false,
   $autoupgrade              = false,
   $service_ensure           = 'running',
   $service_enable           = true,
@@ -112,6 +130,9 @@ class supervisor(
   $inet_server_port         = '*:9000',
   $inet_server_user         = undef,
   $inet_server_pass         = undef,
+  $unix_server_file         = '/var/run/supervisor.sock',
+  $unix_server_chmod        = '0700',
+  $unix_server_chown        = undef,
   $enable_logrotate         = true,
   $logfile                  = '/var/log/supervisor/supervisord.log',
   $logfile_maxbytes         = '500MB',
