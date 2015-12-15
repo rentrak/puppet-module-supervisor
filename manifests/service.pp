@@ -13,6 +13,8 @@
 define supervisor::service (
   $command,
   $ensure                   = 'running',
+  $enable                   = true,
+  $type                     = 'program',
   $numprocs                 = 1,
   $numprocs_start           = 0,
   $priority                 = 999,
@@ -36,6 +38,7 @@ define supervisor::service (
   $stderr_logfile_keep      = 10,
   $environment              = undef,
   $umask                    = undef,
+  $ini_append               = {}
 ) {
   include supervisor
 
@@ -65,7 +68,7 @@ define supervisor::service (
       $config_ensure = file
     }
     'stopped': {
-      $autostart = false
+      $autostart = $enable
       $dir_ensure = 'directory'
       $dir_recurse = false
       $dir_force = false
@@ -86,7 +89,7 @@ define supervisor::service (
     mode    => '0755',
     recurse => $dir_recurse,
     force   => $dir_force,
-    require => Class['supervisor'],
+    require => File['/var/log/supervisor'],
   }
 
   $conf_file = "${supervisor::conf_dir}/${name}${supervisor::conf_ext}"
@@ -101,6 +104,8 @@ define supervisor::service (
       ensure   => $service_ensure,
       provider => supervisor,
     }
+
+    Service[$supervisor::params::system_service] -> Service["supervisor::${name}"]
   }
 
   case $ensure {

@@ -1,12 +1,18 @@
-[unix_http_server]
-file=/var/run/supervisor.sock   ; (the path to the socket file)
-
 <% if @enable_inet_server -%>
 [inet_http_server]
 port=<%= @inet_server_port %>
 <% if @inet_server_user && @inet_server_pass -%>
 username=<%= @inet_server_user %>
 password=<%= @inet_server_pass %>
+<% end -%>
+<% else -%>
+[unix_http_server]
+file=<%= @unix_server_file %>    ; (the path to the socket file)
+<% if @unix_server_chmod -%>
+chmod=<%= @unix_server_chmod %>  ; (socket file mode, default: 0700)
+<% end -%>
+<% if @unix_server_chown -%>
+chown=<%= @unix_server_chown %>  ; (socket file ownership, default: the username and group of the user who starts supervisord)
 <% end -%>
 <% end -%>
 
@@ -16,7 +22,7 @@ logfile_maxbytes=<%= @logfile_maxbytes %>   ; (max main logfile bytes b4 rotatio
 logfile_backups=<%= @logfile_backups %>     ; (num of main logfile rotation backups;default 10)
 loglevel=<%= @log_level %>                  ; (log level;default info; others: debug,warn,trace)
 pidfile=/var/run/supervisord.pid            ; (supervisord pidfile;default supervisord.pid)
-nodaemon=false                              ; (start in foreground if true;default false)
+nodaemon=<%= @nodaemon %>                   ; (start in foreground if true;default false)
 minfds=<%= @minfds %>                       ; (min. avail startup file descriptors;default 1024)
 minprocs=<%= @minprocs %>                   ; (min. avail process descriptors;default 200)
 childlogdir=<%= @childlogdir %>             ; ('AUTO' child log dir, default $TEMP)
@@ -40,7 +46,7 @@ supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
 serverurl=http://<%= @inet_server_port %>
 <% else -%>
 [supervisorctl]
-serverurl=unix:///var/run/supervisor.sock ; use a unix:// URL  for a unix socket
+serverurl=unix://<%= @unix_server_file %>
 <% end -%>
 
 [include]
